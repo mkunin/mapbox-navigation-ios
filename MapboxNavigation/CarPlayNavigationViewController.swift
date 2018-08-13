@@ -11,7 +11,7 @@ import CarPlay
  */
 @available(iOS 12.0, *)
 @objc(MBCarPlayNavigationViewController)
-public class CarPlayNavigationViewController: UIViewController, MGLMapViewDelegate {
+public class CarPlayNavigationViewController: UIViewController {
     /**
      The view controller’s delegate.
      */
@@ -39,6 +39,8 @@ public class CarPlayNavigationViewController: UIViewController, MGLMapViewDelega
                             bottom: view.safeAreaInsets.bottom + padding,
                             right: view.safeAreaInsets.right + padding)
     }
+    
+    var styleObservation: NSKeyValueObservation?
     
     /**
      Creates a new CarPlay navigation view controller for the given route controller and user interface.
@@ -74,7 +76,6 @@ public class CarPlayNavigationViewController: UIViewController, MGLMapViewDelega
         mapView.compassView.isHidden = true
         mapView.logoView.isHidden = true
         mapView.attributionButton.isHidden = true
-        mapView.delegate = self
 
         mapView.defaultAltitude = 500
         mapView.zoomedOutMotorwayAltitude = 1000
@@ -82,6 +83,15 @@ public class CarPlayNavigationViewController: UIViewController, MGLMapViewDelega
 
         self.mapView = mapView
         view.addSubview(mapView)
+        
+        styleObservation = mapView.observe(\.style, options: .new) { [weak self] (mapView, change) in
+            guard change.newValue != nil else {
+                return
+            }
+            self?.mapView?.localizeLabels()
+            self?.updateRouteOnMap()
+            self?.mapView?.recenterMap()
+        }
         
         styleManager = StyleManager(self)
         styleManager.styles = [DayStyle(), NightStyle()]
@@ -94,6 +104,7 @@ public class CarPlayNavigationViewController: UIViewController, MGLMapViewDelega
     
     override public func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        styleObservation = nil
         suspendNotifications()
     }
     
@@ -178,11 +189,6 @@ public class CarPlayNavigationViewController: UIViewController, MGLMapViewDelega
     public func beginPanGesture() {
         mapView?.tracksUserCourse = false
         mapView?.enableFrameByFrameCourseViewTracking(for: 1)
-    }
-    
-    public func mapView(_ mapView: MGLMapView, didFinishLoading style: MGLStyle) {
-        updateRouteOnMap()
-        self.mapView?.recenterMap()
     }
     
     @objc func visualInstructionDidChange(_ notification: NSNotification) {
