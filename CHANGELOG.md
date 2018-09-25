@@ -2,6 +2,7 @@
 ## v0.22.1 (October 2, 2018)
 
 * Fixed a bug which rendered a u-turn icon in the opposite direction. [#1647](https://github.com/mapbox/mapbox-navigation-ios/pull/1647)
+* Renamed `NavigationMapView.tracksUserCourse` to `NavigationMapView.showsUserCourse`. [#1741](https://github.com/mapbox/mapbox-navigation-ios/pull/1741)
 
 ### User Location
 
