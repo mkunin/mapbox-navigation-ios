@@ -2,7 +2,7 @@ import XCTest
 import FBSnapshotTestCase
 @testable import MapboxCoreNavigation
 @testable import MapboxNavigation
-@testable import MapboxDirections
+import MapboxDirections
 
 class SimulatedLocationManagerTests: FBSnapshotTestCase {
 
@@ -13,7 +13,15 @@ class SimulatedLocationManagerTests: FBSnapshotTestCase {
     }
 
     func testSimulateRouteDoublesBack() {
-        let route = Fixture.routesFromMatches(at: "sthlm-double-back")![0]
+        let routeExpectation = expectation(description: "Gets a matching route")
+        var route: Route!
+        Fixture.getRoutesFromMatches(at: "sthlm-double-back") { (waypoints, routes, error) in
+            route = routes?[0]
+            routeExpectation.fulfill()
+        }
+        wait(for: [routeExpectation], timeout: 1)
+        guard route != nil else { return }
+        
         let locationManager = SimulatedLocationManager(route: route)
         let locationManagerSpy = SimulatedLocationManagerSpy()
         locationManager.delegate = locationManagerSpy

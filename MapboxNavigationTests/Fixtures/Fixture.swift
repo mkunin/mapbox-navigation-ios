@@ -1,7 +1,8 @@
 import XCTest
 import Foundation
 import CoreLocation
-@testable import MapboxDirections
+import MapboxDirections
+import OHHTTPStubs
 
 internal class Fixture {
     internal class func stringFromFileNamed(name: String) -> String {
@@ -64,16 +65,26 @@ internal class Fixture {
     }
     
     // Returns `Route` objects from a match response
-    class func routesFromMatches(at filePath: String) -> [Route]? {
+    class func getRoutesFromMatches(at filePath: String, completionHandler: @escaping Directions.RouteCompletionHandler) {
+        let bogusToken = "pk.feedCafeDeadBeefBadeBede"
+        let directions = Directions(accessToken: bogusToken)
+        
         let path = Bundle(for: Fixture.self).path(forResource: filePath, ofType: "json")
         let url = URL(fileURLWithPath: path!)
         let data = try! Data(contentsOf: url)
-        let json = try! JSONSerialization.jsonObject(with: data, options: []) as! JSONDictionary
+        let json = try! JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
         let tracepoints = json["tracepoints"] as! [Any]
         let coordinates = (0...tracepoints.count-1).map { _ in CLLocationCoordinate2D(latitude: 0, longitude: 0) }
+        
+        let apiStub = stub(condition: isHost("api.mapbox.com")) { _ in
+            return OHHTTPStubsResponse(jsonObject: json, statusCode: 200, headers: ["Content-Type": "application/json"])
+        }
+        
         let options = MatchOptions(coordinates: coordinates, profileIdentifier: .automobile)
-        let response = options.response(containingRoutesFrom: json)
-        return response.1
+        directions.calculateRoutes(matching: options) { (waypoints, routes, error) in
+            OHHTTPStubs.removeStub(apiStub)
+            completionHandler(waypoints, routes, error)
+        }
     }
 
     class func routeWithBannerInstructions() -> Route {

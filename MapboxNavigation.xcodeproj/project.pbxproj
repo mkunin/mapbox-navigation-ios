@@ -2095,6 +2095,7 @@
 				"$(SRCROOT)/Carthage/Build/iOS/Quick.framework",
 				"$(SRCROOT)/Carthage/Build/iOS/Nimble.framework",
 				"$(SRCROOT)/Carthage/Build/iOS/Cedar.framework",
+				"$(SRCROOT)/Carthage/Build/iOS/OHHTTPStubs.framework",
 			);
 			name = "Carthage copy frameworks";
 			outputPaths = (
